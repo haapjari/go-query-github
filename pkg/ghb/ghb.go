@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+    "fmt"
 )
 
 type GitHub struct {
@@ -43,6 +44,25 @@ func NewGitHub() *GitHub {
 	gh.APIClient = github.NewClient(tc)
 
 	return gh
+}
+
+func (gh *GitHub) GetTotalNotificationCount(owner, repo string) (int, error) {
+    	// Get all user's notifications
+	notifications, _, err := gh.APIClient.Activity.ListNotifications(gh.APIClientContext, &github.NotificationListOptions{All: true})
+	if err != nil {
+		return 0, err
+	}
+
+	// Filter notifications by the target repository
+	r := fmt.Sprintf("%s/%s", owner, repo)
+	count := 0
+	for _, notification := range notifications {
+		if notification.Repository != nil && notification.Repository.GetFullName() == r {
+			count++
+		}
+	}
+
+	return count, nil 
 }
 
 func (gh *GitHub) FetchAllPullRequests(owner, repo string) ([]*github.PullRequest, []*github.PullRequest, error) {

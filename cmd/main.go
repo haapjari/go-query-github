@@ -63,8 +63,15 @@ func main() {
 
     owner := "kubernetes-sigs" 
     repo := "kind"
-
+    
     g := ghb.NewGitHub() 
+
+    notifications, err := g.GetTotalNotificationCount(owner, repo)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Notifications: %d\n", notifications)
 
     // openPullRequests, closedPullRequests, err := g.FetchAllPullRequests(owner, repo) 
     // if err != nil {
@@ -75,17 +82,15 @@ func main() {
     // -------------------------------------------------------------------- //  
     // -------------------------------------------------------------------- //  
 
-    result, _, err := g.APIClient.Repositories.Get(g.APIClientContext, owner, repo)    
-    if err != nil {
-        log.Fatal(err)
-    }
+    // result, _, err := g.APIClient.Repositories.Get(g.APIClientContext, owner, repo)    
+    // if err != nil {
+    //     log.Fatal(err)
+    // }
 
-    forks := *result.ForksCount
+    // forks := *result.ForksCount
     // subs := *result.SubscribersCount
     // events := result.GetNetworkCount()
     // watchers := result.GetWatchersCount()
-
-    fmt.Printf("Forks: %d\n", forks)
 
     // -------------------------------------------------------------------- //  
     // -------------------------------------------------------------------- //  
