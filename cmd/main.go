@@ -45,9 +45,7 @@ func main() {
 
 	// TODO: Update Struct
     // TODO: Update Database
-    // TODO: Notifications Count
     // TODO: Possible Optimizations
-    // TODO: Contributors Count
     // TODO: Deployments Count
     // TODO: Average Weekly Additions
     // TODO: Average Weekly Deletions
@@ -66,12 +64,15 @@ func main() {
     
     g := ghb.NewGitHub() 
 
-    notifications, err := g.GetTotalNotificationCount(owner, repo)
-    if err != nil {
-        log.Fatal(err)
-    }
+    // contributors, err := g.GetTotalContributorsCount(owner, repo)
+    // if err != nil {
+    //     log.Fatal(err)
+    // } 
 
-    fmt.Printf("Notifications: %d\n", notifications)
+    // notifications, err := g.GetTotalNotificationCount(owner, repo)
+    // if err != nil {
+    //     log.Fatal(err)
+    // }
 
     // openPullRequests, closedPullRequests, err := g.FetchAllPullRequests(owner, repo) 
     // if err != nil {

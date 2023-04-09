@@ -15,8 +15,9 @@ type Repo struct {
    // AvgWeeklyAdditions int `json:"avg_weekly_additions"`
    // AvgWeeklyDeletions int `json:"avg_weekly_deletions"`
    Forks int `json:"forks"`
-   Pulls int `json:"pulls"`
-   // NetworkEvents int `json:"network_events"`
+   OpenPulls int `json:"open_pulls"`
+   ClosedPulls int `json:"closed_pulls"`
+   NetworkEvents int `json:"network_events"`
    Subscribers int `json:"subscribers"`
    Contributors int `json:"contributors"`
    Deployments int `json:"deployments"`

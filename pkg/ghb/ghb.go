@@ -46,6 +46,19 @@ func NewGitHub() *GitHub {
 	return gh
 }
 
+func (gh *GitHub) GetTotalContributorsCount(repoOwner, repoName string) (int, error) {
+	// Get all repository contributors
+	contributors, _, err := gh.APIClient.Repositories.ListContributors(gh.APIClientContext, repoOwner, repoName, &github.ListContributorsOptions{})
+	if err != nil {
+		return 0, err
+	}
+
+	// Count contributors
+	contributorsCount := len(contributors)
+
+	return contributorsCount, nil
+}
+
 func (gh *GitHub) GetTotalNotificationCount(owner, repo string) (int, error) {
     	// Get all user's notifications
 	notifications, _, err := gh.APIClient.Activity.ListNotifications(gh.APIClientContext, &github.NotificationListOptions{All: true})
