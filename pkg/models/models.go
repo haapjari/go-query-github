@@ -1,5 +1,9 @@
 package models 
 
+import (
+	"github.com/google/go-github/github"
+)
+
 type Repo struct {
    Url string `json:"url"` 
    OpenIssues int `json:"open_issues"`
@@ -12,10 +16,10 @@ type Repo struct {
    CreationDate string `json:"creation_date"`
    Stargazers int `json:"stargazers"`
    LatestRelease string `json:"latest_release"`
-   // AvgWeeklyAdditions int `json:"avg_weekly_additions"`
-   // AvgWeeklyDeletions int `json:"avg_weekly_deletions"`
+   //
    Forks int `json:"forks"`
    OpenPulls int `json:"open_pulls"`
+   Releases int `json:"releases"`
    ClosedPulls int `json:"closed_pulls"`
    NetworkEvents int `json:"network_events"`
    Subscribers int `json:"subscribers"`
@@ -78,4 +82,15 @@ type PullRequestBranch struct {
     User  User   `json:"user"`
 }
 
+type ContributorStats struct {
+    Total       int      `json:"total"`
+    Author      github.User  `json:"author"`
+    Weeks       []WeekStats `json:"weeks"`
+}
 
+type WeekStats struct {
+    W int `json:"w"`
+    A int `json:"a"`
+    D int `json:"d"`
+    C int `json:"c"`
+}

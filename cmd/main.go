@@ -1,13 +1,11 @@
 package main
 
 import (
-	"fmt"
+    "strings"
 	"log"
-    //"golang.org/x/oauth2"
-	//"github.com/google/go-github/github"
 	"github.com/haapjari/go-query-github/pkg/models"
 	"github.com/haapjari/go-query-github/pkg/psql"
-	"github.com/haapjari/go-query-github/pkg/ghb"
+    "github.com/haapjari/go-query-github/pkg/ghb"
     "github.com/joho/godotenv"
 )
 
@@ -24,83 +22,112 @@ func main() {
 		return
 	}
 
-	// Get a single row from the database
-	// Parse owner and repository from "repository_url" column
-	// Query GitHup API: "get_avg_weekly_additions"
-
-	// Read a value
-	// var repo models.Repo
 	var repos []models.Repo
 	db.Find(&repos)
 
-    // Access data in the repos struct
+    totalRepos := len(repos) 
+ 
+    for i, repo := range repos {
+        parts := strings.Split(repo.Url, "/")
+        owner := parts[1]
+        url := repo.Url
+        name := parts[2]
 
-	// This is how to access the data in the repos
-	// for _, repo := range repos {
-	// 	parts := strings.Split(repo.Url, "/")
-	// 	owner := parts[1]
-	// 	repository := parts[2]
-	// 	fmt.Printf("Owner: %s, Repository: %s\n", owner, repository)
-	// }
+        log.Default().Printf("Processing Repository %d of %d\n", i+1, totalRepos)
+        log.Default().Printf("Owner: %s, Name: %s\n", owner, name)
 
-	// TODO: Update Struct
-    // TODO: Update Database
-    // TODO: Possible Optimizations
-    // TODO: Deployments Count
-    // TODO: Average Weekly Additions
-    // TODO: Average Weekly Deletions
+        g := ghb.NewGitHub() 
 
-    // AvgWeeklyAdditions int `json:"avg_weekly_additions"`
-    // AvgWeeklyDeletions int `json:"avg_weekly_deletions"`
+        releases, err := g.GetTotalReleasesCount(owner, name)
+        if err != nil {
+            log.Fatal(err)
+        }
 
-    // -------------------------------------------------------------------- //  
-    // -------------------------------------------------------------------- //  
-    // -------------------------------------------------------------------- //  
+        err = p.UpdateRows(db, url, "releases", releases)
+        if err != nil {
+            log.Fatal(err)
+        }
 
-    // Fetch Pull Requests 
+        deployments, err := g.GetTotalDeploymentsCount(owner, name)
+        if err != nil {
+            log.Fatal(err)
+        }
 
-    owner := "kubernetes-sigs" 
-    repo := "kind"
-    
-    g := ghb.NewGitHub() 
+        err = p.UpdateRows(db, url, "deployments", deployments)
+        if err != nil {
+            log.Fatal(err)
+        }
 
-    // contributors, err := g.GetTotalContributorsCount(owner, repo)
-    // if err != nil {
-    //     log.Fatal(err)
-    // } 
+        contributors, err := g.GetTotalContributorsCount(owner, name)
+        if err != nil {
+            log.Fatal(err)
+        }
 
-    // notifications, err := g.GetTotalNotificationCount(owner, repo)
-    // if err != nil {
-    //     log.Fatal(err)
-    // }
+        err = p.UpdateRows(db, url, "contributors", contributors)
+        if err != nil {
+            log.Fatal(err)
+        }
 
-    // openPullRequests, closedPullRequests, err := g.FetchAllPullRequests(owner, repo) 
-    // if err != nil {
-    //     log.Fatal(err)
-    // }
+        notifications, err := g.GetTotalNotificationCount(owner, name)
+        if err != nil {
+            log.Fatal(err)
+        }
 
-    // -------------------------------------------------------------------- //  
-    // -------------------------------------------------------------------- //  
-    // -------------------------------------------------------------------- //  
+        err = p.UpdateRows(db, url, "notifications", notifications)
+        if err != nil {
+            log.Fatal(err)
+        }
 
-    // result, _, err := g.APIClient.Repositories.Get(g.APIClientContext, owner, repo)    
-    // if err != nil {
-    //     log.Fatal(err)
-    // }
+        openPullRequests, closedPullRequests, err := g.FetchAllPullRequests(owner, name) 
+        if err != nil {
+            log.Fatal(err)
+        }
 
-    // forks := *result.ForksCount
-    // subs := *result.SubscribersCount
-    // events := result.GetNetworkCount()
-    // watchers := result.GetWatchersCount()
+        err = p.UpdateRows(db, url, "open_pulls", len(openPullRequests))
+        if err != nil {
+            log.Fatal(err)
+        }
 
-    // -------------------------------------------------------------------- //  
-    // -------------------------------------------------------------------- //  
-    // -------------------------------------------------------------------- //  
+        err = p.UpdateRows(db, url, "closed_pulls", len(closedPullRequests))
+        if err != nil {
+            log.Fatal(err)
+        }
 
-   
-	// err = p.Close()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// 	return
-	// }
+        result, _, err := g.APIClient.Repositories.Get(g.APIClientContext, owner, name)    
+        if err != nil {
+            log.Fatal(err)
+        }
+
+        forks := *result.ForksCount
+
+        err = p.UpdateRows(db, url, "forks", forks)
+        if err != nil {
+            log.Fatal(err)
+        }
+
+        subs := *result.SubscribersCount
+
+        err = p.UpdateRows(db, url, "subscribers", subs)
+        if err != nil {
+            log.Fatal(err)
+        }
+
+        events := result.GetNetworkCount()
+
+        err = p.UpdateRows(db, url, "network_events", events)
+        if err != nil {
+            log.Fatal(err)
+        }
+
+        watchers := result.GetWatchersCount()
+
+        err = p.UpdateRows(db, url, "watchers", watchers)
+        if err != nil {
+            log.Fatal(err)
+        }
+        
+        remainingRepos := totalRepos - (i + 1)
+
+        log.Default().Printf("Completed Repository %d of %d. %d repositories remaining.\n\n", i+1, totalRepos, remainingRepos)
+    }
 }

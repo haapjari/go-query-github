@@ -46,6 +46,32 @@ func NewGitHub() *GitHub {
 	return gh
 }
 
+func (gh *GitHub) GetTotalReleasesCount(repoOwner, repoName string) (int, error) {
+	// Get all repository releases
+	releases, _, err := gh.APIClient.Repositories.ListReleases(gh.APIClientContext, repoOwner, repoName, &github.ListOptions{})
+	if err != nil {
+		return 0, err
+	}
+
+	// Count releases
+	releasesCount := len(releases)
+
+	return releasesCount, nil
+}
+
+func (gh *GitHub) GetTotalDeploymentsCount(owner, repo string) (int, error) {
+	// Get all repository deployments
+	deployments, _, err := gh.APIClient.Repositories.ListDeployments(gh.APIClientContext, owner, repo, &github.DeploymentsListOptions{})
+	if err != nil {
+		return 0, err
+	}
+
+	// Count deployments
+	deploymentsCount := len(deployments)
+
+	return deploymentsCount, nil
+}
+
 func (gh *GitHub) GetTotalContributorsCount(repoOwner, repoName string) (int, error) {
 	// Get all repository contributors
 	contributors, _, err := gh.APIClient.Repositories.ListContributors(gh.APIClientContext, repoOwner, repoName, &github.ListContributorsOptions{})
@@ -120,3 +146,31 @@ func (gh *GitHub) FetchAllPullRequests(owner, repo string) ([]*github.PullReques
 	return openPullRequests, closedPullRequests, nil
 }
 
+func (gh *GitHub) GetAverageWeeklyAdditionsAndDeletions(repoOwner, repoName string) (float64, float64, error) {
+	opt := &github.CommitsListOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+	}
+
+	commits, _, err := gh.APIClient.Repositories.ListCommits(gh.APIClientContext, repoOwner, repoName, opt)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	// Calculate total additions and deletions
+	totalAdditions := 0
+	totalDeletions := 0
+	commitsCounted := 0
+	for _, commit := range commits {
+		if commit.Stats != nil {
+			totalAdditions += *commit.Stats.Additions
+			totalDeletions += *commit.Stats.Deletions
+			commitsCounted++
+		}
+	}
+
+	// Calculate average weekly additions and deletions (assuming last 100 commits are within 1 week)
+	averageWeeklyAdditions := float64(totalAdditions) / float64(commitsCounted)
+	averageWeeklyDeletions := float64(totalDeletions) / float64(commitsCounted)
+
+	return averageWeeklyAdditions, averageWeeklyDeletions, nil
+}

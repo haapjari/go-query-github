@@ -51,4 +51,13 @@ func (p *PostgreSQL) Close() error {
     return sqlDB.Close()
 }
 
+func (p *PostgreSQL) UpdateRows(db *gorm.DB, url string, column string, value int) error {
+    // Use raw SQL to update the rows
+    // Make sure to replace 'your_table' and other placeholders with your actual table and column names
+    sql := `UPDATE repos
+            SET ` + column + ` = ?
+            WHERE url = ?
+            AND (` + column + ` IS NULL);`
 
+    return db.Exec(sql, value, url).Error
+}
