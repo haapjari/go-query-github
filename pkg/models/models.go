@@ -8,15 +8,12 @@ type Repo struct {
    Url string `json:"url"` 
    OpenIssues int `json:"open_issues"`
    ClosedIssues int `json:"closed_issues"`
-   OpenIssuesRatio float64 `json:"open_issues_ratio"`
    Commits int `json:"commits"`
    SelfWrittenLOC int `json:"self_written_loc"`
    LibraryLOC int `json:"library_loc"`
-   LibraryToSelfWrittenLOCRatio float64 `json:"library_to_self_written_loc_ratio"`
    CreationDate string `json:"creation_date"`
    Stargazers int `json:"stargazers"`
    LatestRelease string `json:"latest_release"`
-   //
    Forks int `json:"forks"`
    OpenPulls int `json:"open_pulls"`
    Releases int `json:"releases"`
