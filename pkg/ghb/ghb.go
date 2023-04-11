@@ -2,19 +2,20 @@ package ghb
 
 import (
 	"context"
-	"github.com/joho/godotenv"
-	"golang.org/x/oauth2"
-	"github.com/google/go-github/github"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
-    "fmt"
+
+	"github.com/google/go-github/github"
+	"github.com/joho/godotenv"
+	"golang.org/x/oauth2"
 )
 
 type GitHub struct {
-	HTTPClient *http.Client
-    APIClient *github.Client
-    APIClientContext context.Context
+	HTTPClient       *http.Client
+	APIClient        *github.Client
+	APIClientContext context.Context
 }
 
 func NewGitHub() *GitHub {
@@ -32,14 +33,14 @@ func NewGitHub() *GitHub {
 	// create http client with OAuth2 token source
 	gh.HTTPClient = oauth2.NewClient(context.Background(), tokenSource)
 
-    // authentication for the github client
-    gh.APIClientContext = context.Background()
+	// authentication for the github client
+	gh.APIClientContext = context.Background()
 
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: os.Getenv("GITHUB_API_TOKEN")},
-	 )
-	
-    tc := oauth2.NewClient(gh.APIClientContext, ts)
+	)
+
+	tc := oauth2.NewClient(gh.APIClientContext, ts)
 
 	gh.APIClient = github.NewClient(tc)
 
@@ -86,7 +87,7 @@ func (gh *GitHub) GetTotalContributorsCount(repoOwner, repoName string) (int, er
 }
 
 func (gh *GitHub) GetTotalNotificationCount(owner, repo string) (int, error) {
-    	// Get all user's notifications
+	// Get all user's notifications
 	notifications, _, err := gh.APIClient.Activity.ListNotifications(gh.APIClientContext, &github.NotificationListOptions{All: true})
 	if err != nil {
 		return 0, err
@@ -101,11 +102,11 @@ func (gh *GitHub) GetTotalNotificationCount(owner, repo string) (int, error) {
 		}
 	}
 
-	return count, nil 
+	return count, nil
 }
 
 func (gh *GitHub) FetchAllPullRequests(owner, repo string) ([]*github.PullRequest, []*github.PullRequest, error) {
-    log.Default().Printf("Fetching pull requests for repository: %s\n", repo)
+	log.Default().Printf("Fetching pull requests for repository: %s\n", repo)
 
 	opt := &github.PullRequestListOptions{
 		State: "all",
@@ -116,7 +117,7 @@ func (gh *GitHub) FetchAllPullRequests(owner, repo string) ([]*github.PullReques
 
 	var allPullRequests, openPullRequests, closedPullRequests []*github.PullRequest
 
-    page := 1
+	page := 1
 	for {
 		pullRequests, resp, err := gh.APIClient.PullRequests.List(gh.APIClientContext, owner, repo, opt)
 		if err != nil {
@@ -125,22 +126,22 @@ func (gh *GitHub) FetchAllPullRequests(owner, repo string) ([]*github.PullReques
 
 		allPullRequests = append(allPullRequests, pullRequests...)
 
-        for _, pr := range pullRequests {
-            if pr.GetState() == "open" {
-                openPullRequests = append(openPullRequests, pr)
-            } else if pr.GetState() == "closed" {
-                closedPullRequests = append(closedPullRequests, pr)
-            }
-        }
+		for _, pr := range pullRequests {
+			if pr.GetState() == "open" {
+				openPullRequests = append(openPullRequests, pr)
+			} else if pr.GetState() == "closed" {
+				closedPullRequests = append(closedPullRequests, pr)
+			}
+		}
 
 		if resp.NextPage == 0 {
 			break
 		}
 
 		opt.Page = resp.NextPage
-        
-        log.Default().Printf("Page: %d\n", page)
-        page++
+
+		log.Default().Printf("Page: %d\n", page)
+		page++
 	}
 
 	return openPullRequests, closedPullRequests, nil
