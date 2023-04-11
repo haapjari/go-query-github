@@ -7,6 +7,7 @@ import (
 	_ "github.com/lib/pq"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+    "github.com/haapjari/go-query-github/pkg/models"
 )
 
 type PostgreSQL struct {
@@ -52,12 +53,7 @@ func (p *PostgreSQL) Close() error {
 }
 
 func (p *PostgreSQL) UpdateRows(db *gorm.DB, url string, column string, value int) error {
-    // Use raw SQL to update the rows
-    // Make sure to replace 'your_table' and other placeholders with your actual table and column names
-    sql := `UPDATE repos
-            SET ` + column + ` = ?
-            WHERE url = ?
-            AND (` + column + ` IS NULL);`
+    result := db.Model(&models.Repo{}).Where("url = ?", url).Update(column, value)
 
-    return db.Exec(sql, value, url).Error
+    return result.Error
 }

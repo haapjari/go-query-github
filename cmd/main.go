@@ -14,7 +14,7 @@ func main() {
     if err != nil {
         log.Fatal("Error loading .env file")
     }   
-
+    
     p := psql.NewPostgreSQL("localhost", 5432, "postgres", "postgres", "postgres")
 	
     db, err := p.Connect()
@@ -22,48 +22,6 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-
-    // file, err := os.Open("data/cleaned_dataset.csv")
-    // if err != nil {
-    //     panic(err)
-    // }
-    // defer file.Close() 
-
-    // // 3. Parse the .csv file into a slice of Repo structs
-	// reader := csv.NewReader(file)
-	// lines, err := reader.ReadAll()
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// var repos []models.Repo
-	// for _, line := range lines[1:] { // Skip the header line
-	// 	openIssues, _ := strconv.Atoi(line[1])
-	// 	closedIssues, _ := strconv.Atoi(line[2])
-	// 	commits, _ := strconv.Atoi(line[3])
-	// 	selfWrittenLOC, _ := strconv.Atoi(line[4])
-	// 	libraryLOC, _ := strconv.Atoi(line[5])
-	// 	stargazers, _ := strconv.Atoi(line[7])
-
-	// 	repos = append(repos, models.Repo{
-	// 		Url:            line[0],
-	// 		OpenIssues:     openIssues,
-	// 		ClosedIssues:   closedIssues,
-	// 		Commits:        commits,
-	// 		SelfWrittenLOC: selfWrittenLOC,
-	// 		LibraryLOC:     libraryLOC,
-	// 		CreationDate:   line[6],
-	// 		Stargazers:     stargazers,
-	// 		LatestRelease:  line[8],
-	// 	})
-	// }
-
-    // for _, repo := range repos {
-	// 	result := db.Create(&repo)
-	// 	if result.Error != nil {
-	// 		fmt.Printf("Error inserting repo (%s): %v\n", repo.Url, result.Error)
-	// 	}
-	// }
 
 	var repos []models.Repo
 	db.Find(&repos)
@@ -76,7 +34,7 @@ func main() {
         url := repo.Url
         name := parts[2]
 
-        log.Default().Printf("Processing Repository %d of %d\n", i+1, totalRepos)
+        //log.Default().Printf("Processing Repository %d of %d\n", i+1, totalRepos)
         log.Default().Printf("Owner: %s, Name: %s\n", owner, name)
 
         g := ghb.NewGitHub() 
@@ -168,7 +126,7 @@ func main() {
         if err != nil {
             log.Default().Printf("%s", err) 
         }
-        
+
         remainingRepos := totalRepos - (i + 1)
 
         log.Default().Printf("Completed Repository %d of %d. %d repositories remaining.\n\n", i+1, totalRepos, remainingRepos)
