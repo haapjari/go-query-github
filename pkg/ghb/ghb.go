@@ -2,7 +2,6 @@ package ghb
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -48,61 +47,70 @@ func NewGitHub() *GitHub {
 }
 
 func (gh *GitHub) GetTotalReleasesCount(repoOwner, repoName string) (int, error) {
-	// Get all repository releases
-	releases, _, err := gh.APIClient.Repositories.ListReleases(gh.APIClientContext, repoOwner, repoName, &github.ListOptions{})
-	if err != nil {
-		return 0, err
-	}
+	releasesCount := 0
+	opt := &github.ListOptions{PerPage: 100}
 
-	// Count releases
-	releasesCount := len(releases)
+	log.Default().Printf("Fetching releases for %s/%s", repoOwner, repoName)
+
+	for {
+		releases, resp, err := gh.APIClient.Repositories.ListReleases(gh.APIClientContext, repoOwner, repoName, opt)
+		if err != nil {
+			return 0, err
+		}
+
+		releasesCount += len(releases)
+
+		if resp.NextPage == 0 {
+			break
+		}
+
+		opt.Page = resp.NextPage
+
+		log.Default().Printf("Page: %d\n", opt.Page)
+	}
 
 	return releasesCount, nil
 }
 
-func (gh *GitHub) GetTotalDeploymentsCount(owner, repo string) (int, error) {
-	// Get all repository deployments
-	deployments, _, err := gh.APIClient.Repositories.ListDeployments(gh.APIClientContext, owner, repo, &github.DeploymentsListOptions{})
-	if err != nil {
-		return 0, err
-	}
-
-	// Count deployments
-	deploymentsCount := len(deployments)
-
-	return deploymentsCount, nil
-}
-
 func (gh *GitHub) GetTotalContributorsCount(repoOwner, repoName string) (int, error) {
-	// Get all repository contributors
-	contributors, _, err := gh.APIClient.Repositories.ListContributors(gh.APIClientContext, repoOwner, repoName, &github.ListContributorsOptions{})
-	if err != nil {
-		return 0, err
-	}
+	contributors := make(map[int64]struct{})
+	page := 1
+	perPage := 100
 
-	// Count contributors
-	contributorsCount := len(contributors)
+	log.Default().Printf("Fetching contributors for %s/%s", repoOwner, repoName)
 
-	return contributorsCount, nil
-}
-
-func (gh *GitHub) GetTotalNotificationCount(owner, repo string) (int, error) {
-	// Get all user's notifications
-	notifications, _, err := gh.APIClient.Activity.ListNotifications(gh.APIClientContext, &github.NotificationListOptions{All: true})
-	if err != nil {
-		return 0, err
-	}
-
-	// Filter notifications by the target repository
-	r := fmt.Sprintf("%s/%s", owner, repo)
-	count := 0
-	for _, notification := range notifications {
-		if notification.Repository != nil && notification.Repository.GetFullName() == r {
-			count++
+	for {
+		opts := &github.CommitsListOptions{
+			ListOptions: github.ListOptions{
+				Page:    page,
+				PerPage: perPage,
+			},
 		}
+
+		commits, resp, err := gh.APIClient.Repositories.ListCommits(gh.APIClientContext, repoOwner, repoName, opts)
+		if err != nil {
+			return 0, err
+		}
+
+		// Track unique contributors
+		for _, commit := range commits {
+			if commit.Author != nil {
+				contributors[*commit.Author.ID] = struct{}{}
+			}
+		}
+
+		// Check if there are more pages
+		if resp.NextPage == 0 {
+			break
+		}
+
+		// Move to the next page
+		page = resp.NextPage
+
+		log.Default().Printf("Page: %d\n", page)
 	}
 
-	return count, nil
+	return len(contributors), nil
 }
 
 func (gh *GitHub) FetchAllPullRequests(owner, repo string) ([]*github.PullRequest, []*github.PullRequest, error) {
