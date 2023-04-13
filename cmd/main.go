@@ -25,7 +25,8 @@ func main() {
 	}
 
 	var repos []models.Repo
-	db.Find(&repos)
+	// db.Find(&repos)
+	db.Where("contributors = ?", 0).Find(&repos)
 
 	totalRepos := len(repos)
 
@@ -40,17 +41,9 @@ func main() {
 
 		g := ghb.NewGitHub()
 
-		releases, err := g.GetTotalReleasesCount(owner, name)
-		if err != nil {
-			log.Default().Printf("%s", err)
-		}
+		log.Default().Printf("Fetching contributors for %s/%s", owner, name)
 
 		contributors, err := g.GetTotalContributorsCount(owner, name)
-		if err != nil {
-			log.Default().Printf("%s", err)
-		}
-
-		err = p.UpdateRows(db, url, "releases", releases)
 		if err != nil {
 			log.Default().Printf("%s", err)
 		}

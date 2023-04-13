@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/google/go-github/github"
 	"github.com/joho/godotenv"
@@ -92,22 +93,22 @@ func (gh *GitHub) GetTotalContributorsCount(repoOwner, repoName string) (int, er
 			return 0, err
 		}
 
-		// Track unique contributors
 		for _, commit := range commits {
-			if commit.Author != nil {
+			if commit.Author != nil && commit.Author.ID != nil {
 				contributors[*commit.Author.ID] = struct{}{}
 			}
 		}
 
-		// Check if there are more pages
 		if resp.NextPage == 0 {
 			break
 		}
 
-		// Move to the next page
 		page = resp.NextPage
 
 		log.Default().Printf("Page: %d\n", page)
+
+        // In order not to get blocked from GitHub API.
+		time.Sleep(2 * time.Second)
 	}
 
 	return len(contributors), nil
